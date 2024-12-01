@@ -15,7 +15,7 @@ The **Opportunity and Account Summarizer Snap-In** automates the tracking and su
 
 ---
 
-## Usage  
+## Usage - 
 
 ### How It Works  
 
