@@ -1,153 +1,203 @@
-## DevRev Snaps TypeScript Template
+# Opportunity and Account Summarizer Snap-In  
 
-This repository contains a template for the functions that can be deployed as
-part of Snap-Ins.
+## Overview  
+The **Opportunity and Account Summarizer Snap-In** automates the tracking and summarization of closed deals in DevRev. Summaries are sent to a configurable Slack channel, helping sales teams stay updated and make better decisions with real-time, actionable insights.  
 
-For reference on snap-ins, refer to the [documentation](https://github.com/devrev/snap-in-docs).
+---
 
-### Getting started with the template
+## Key Features  
 
-1. Create a new repository using this template.
-2. In the new repository, you can add functions at the path `src/functions` where the folder name corresponds to the function name in your manifest file.
-3. Ensure to include each new function in the file named "src/function-factory.ts".
+1. **Automated Summaries**: Generates summaries whenever deals are closed.  
+2. **Slack Integration**: Sends notifications directly to your Slack workspace.  
+3. **Insightful Metrics**: Includes key details like deal size, closing date, sales reps, and more.  
+4. **Customizable Configurations**: Easily tailor the behavior to match your team’s requirements.  
+5. **Real-Time Updates**: Ensure your team stays informed without delays.  
 
-### Testing locally
+---
 
-To test your code locally, add test events under 'src/fixtures' following the example event provided. Additionally, you can include keyring values in the event payload to test API calls.```
+## Usage  
 
-After adding the event, execute the following commands to test your code:
+### How It Works  
 
-```
-npm install
-npm run start -- --functionName=on_work_creation --fixturePath=on_work_created_event.json
-```
+1. **Monitor Opportunities**: The snap-in monitors opportunity statuses in DevRev.  
+2. **Generate Summaries**: When a deal is marked as closed, a summary is automatically created.  
+3. **Send Notifications**: The summary is posted to a Slack channel.  
 
-### Adding external dependencies
+### Example Slack Notification  
 
-You can also add dependencies on external packages to package.json under the “dependencies” key. These dependencies will be made available to your function at runtime and during testing.
+```plaintext  
+**Deal Closed!**  
+- **Deal Name**: Enterprise Expansion Package  
+- **Account**: FutureTech Solutions  
+- **Amount**: $750,000  
+- **Closing Date**: 2024-12-01  
+- **Sales Rep**: Jane Doe  
+- **Insights**: Deal closed 10% faster than the average.  
 
-### Linting
+Fantastic work! Let's keep winning! 🎉  
+```  
 
-To check for lint errors, run the following command:
+---
 
-```bash
-npm run lint
-```
+## Installation  
 
-To automatically fix fixable lint errors, run:
+### Prerequisites  
 
-```bash
-npm run lint:fix
-```
+1. **DevRev Access**: API token with permission to access opportunities and accounts.  
+2. **Slack API Token**: A Slack workspace with a bot-enabled API token and the target channel ID.  
+3. **Node.js**: Installed for running the snap-in locally or deploying it.  
 
-### Deploying Snap-ins
+### Steps  
 
-Once you are done with the testing, run the following commands to deploy your snap-in:
+1. **Clone the Repository**  
 
-1. Authenticate to devrev CLI, run the following command:
+   ```bash  
+   git clone https://github.com/your-username/opportunity-account-summarizer.git  
+   cd opportunity-account-summarizer  
+   ```  
 
-```
-devrev profiles authenticate --org <devorg name> --usr <user email>
-```
+2. **Install Dependencies**  
 
-2. To create a snap_in_version, run the following command:
+   ```bash  
+   npm install  
+   ```  
 
-```
-devrev snap_in_version create-one --path <template path> --create-package
-```
+3. **Set Up Environment Variables**  
 
-3. Draft the snap_in, run the following command:
+   Create a `.env` file in the project root:  
+   ```plaintext  
+   DEVREV_API_TOKEN=<your_devrev_api_token>  
+   SLACK_API_TOKEN=<your_slack_api_token>  
+   SLACK_CHANNEL_ID=<your_slack_channel_id>  
+   ```  
 
-```
-devrev snap_in draft
-```
+4. **Start the Server**  
 
-4. To update the snap-in, run the following command:
+   Run the server locally:  
+   ```bash  
+   npm run dev  
+   ```  
 
-```
-devrev snap_in update
-```
+5. **Deploy**  
 
-5. Activate the snap_in
+   Deploy the snap-in using:  
+   ```bash  
+   npm run deploy  
+   ```  
 
-```
-devrev snap_in activate
-```
+---
 
-### Testing Snap-in changes locally
+## Configuration  
 
-### Setting up the server
+Customize the snap-in by editing the `config.json` file:  
 
-To test out changes in snap-in locally, developers can create a snap-in version in test mode.
-A snap-in version created in test mode enables developers to specify a public HTTP URL to receive events from DevRev. This makes for
-quick code changes on the local machine without needing to repeatedly deploy the snap-in again for testing the changes.
+```json  
+{  
+  "summary_template": {  
+    "deal_name": "Deal Name: {{deal.name}}",  
+    "account_name": "Account: {{account.name}}",  
+    "amount": "Amount: ${{deal.amount}}",  
+    "closing_date": "Closing Date: {{deal.closing_date}}",  
+    "sales_rep": "Sales Rep: {{deal.sales_rep}}"  
+  },  
+  "minimum_deal_value": 50000,  
+  "notifications": {  
+    "enabled": true,  
+    "channel": "sales-updates"  
+  }  
+}  
+```  
 
-To test out a snap-in version locally, follow the below steps:
+### Configurable Options  
 
-1. Run a server locally to ingest events from DevRev. The `port` parameter is optional. If not set, the server starts default on `8000`.
+- **Minimum Deal Value**: Set a threshold for which deals trigger notifications.  
+- **Notification Template**: Modify the Slack message format.  
+- **Target Channel**: Choose the Slack channel for updates.  
 
-```
-npm run test:server -- --port=<PORT>
-```
+---
 
-2. Expose the local port as a publicly available URL. We recommend using [`ngrok`](https://ngrok.com/download) since it is free and easy to set up. The command for running ngrok tunnelling on port `8000`:
+## Code Example  
 
-```
-ngrok http 8000
-```
+Here's a simplified view of the notification logic:  
 
-This returns a public HTTP URL.
+```javascript  
+const axios = require('axios');  
+require('dotenv').config();  
 
-3. Create a snap-in version with the `testing-url` flag set
+const postToSlack = async (message) => {  
+  const url = 'https://slack.com/api/chat.postMessage';  
+  const payload = {  
+    channel: process.env.SLACK_CHANNEL_ID,  
+    text: message,  
+  };  
 
-```
-devrev snap_in_version create-one --path <template path> --create-package --testing-url <HTTP_URL>
-```
+  await axios.post(url, payload, {  
+    headers: {  
+      Authorization: `Bearer ${process.env.SLACK_API_TOKEN}`,  
+      'Content-Type': 'application/json',  
+    },  
+  });  
+};  
 
-Here, `HTTP_URL` is the publicly available URL from Step 2. The URL should start with `http` or `https`
+const generateSummary = (deal) => {  
+  return `  
+ **Deal Closed!**  
+- **Deal Name**: ${deal.name}  
+- **Account**: ${deal.account_name}  
+- **Amount**: $${deal.amount}  
+- **Closing Date**: ${deal.closing_date}  
+- **Sales Rep**: ${deal.sales_rep}  
 
-4. Once the snap-in version is ready, create a snap-in, update and activate it.
+ 
+  `;  
+};  
 
-```
-devrev snap_in draft
-```
+const handleDealClosure = async (deal) => {  
+  if (deal.amount < 50000) return; // Skip small deals  
 
-Update the snap-in through UI or using the CLI:
+  const summary = generateSummary(deal);  
+  await postToSlack(summary);  
+};  
 
-```
-devrev snap_in update
-```
+// Example Usage  
+const exampleDeal = {  
+  name: 'Growth Plan Upgrade',  
+  account_name: 'Innovate Ltd.',  
+  amount: 120000,  
+  closing_date: '2024-12-01',  
+  sales_rep: 'Alice Johnson',  
+};  
 
-Activate the snap-in through UI or through the CLI command:
+handleDealClosure(exampleDeal);  
+```  
 
-```
-devrev snap_in activate
-```
+---
 
-### Receiving events locally
+## Development  
 
-After the snap-in has been activated, it can receive events locally from DevRev as a
-snap-in would. If the snap-in was listening to `work_created` event type, then creating a
-new work-item would send the event to the local server.
+### Testing  
 
-If utilizing ngrok, accessing the ngrok UI is possible by opening http://127.0.0.1:4040/ in the browser. This interface offers a neat way to review the list of requests and replay them if necessary.
+Run tests to validate functionality:  
 
-The service account token included with the request is valid for only 30 minutes. Therefore, attempting to call the DevRev API with that token for events older than this timeframe will result in a '401 Unauthorized' error.
+```bash  
+npm run test  
+```  
 
-### Updating manifest or the URL
+### Contributing  
 
-The code can be changed without the need to create a snap-in version or redeploy the snap-in. On any change to the
-`src` folder, the server restarts with the updated changes. However, on [patch compatible](https://developer.devrev.ai/snap-in-development/upgrade-snap-ins#version-compatibility) updates to the manifest or the testing URL, we can `upgrade` the snap-in version.
+1. Fork the repository.  
+2. Create a new branch for your changes.  
+3. Submit a pull request with detailed explanations.  
 
-```
-devrev snap_in_version upgrade --manifest <PATH_TO_MANIFEST> --testing-url <UPDATED_URL>
-```
+---
 
-In case of non-patch compatible updates, the `force` flag can be used to upgrade the version. However this will delete any
-existing snap-ins that have been created from this version.
+## Support  
 
-```
-devrev snap_in_version upgrade --force --manifest <PATH_TO_MANIFEST> --testing-url <UPDATED_URL>
-```
+For help or feature requests, contact [support@devrev.com](mailto:support@devrev.com).  
 
-Do note that manifest must always be provided when upgrading a snap-in version.
+---
+ 
+
+ 
+
+
